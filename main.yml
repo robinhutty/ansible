@@ -1,0 +1,27 @@
+- name: Apply common configuration to all nodes
+  hosts: all
+  become: true
+  roles:
+    - common
+  tags:
+    - containerd
+
+
+# - name: Apply configuration to the node(s) that run public DNS
+#   hosts: public_dns
+#   become: true
+#   roles:
+#     - auth_dns
+
+# - name: Apply configuration to the node(s) that run the LAN
+#   hosts: lanman
+#   become: true
+#   roles:
+#     - netmanager
+#     # - container-compose
+
+# - name: Install some dotfiles
+#   tags: test
+#   hosts: test
+#   roles:
+#     - dotfiles
