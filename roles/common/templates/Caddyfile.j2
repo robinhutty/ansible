@@ -1,0 +1,25 @@
+{{ ansible_managed | comment }}
+# commit: {{ lookup('pipe', 'git rev-parse --short HEAD') }}
+{
+  # Global Options: https://caddyserver.com/docs/caddyfile/options
+
+  email robin+caddy@{{ inventory_hostname + '.' + external_domain }}
+  # Set a default TLS ServerName for when clients do not use SNI in their ClientHello
+  default_sni {{ external_domain }}
+
+  # In case I want to _disable_ Caddy's automagic for HTTPS: https://caddyserver.com/docs/automatic-https
+  auto_https off
+
+  metrics {
+    per_host
+  }
+
+}
+
+# Server Options: https://caddyserver.com/docs/caddyfile/options#server-options
+servers {
+    # https://caddyserver.com/docs/caddyfile/options#enable-full-duplex
+    # enable_full_duplex
+}
+
+import composed/*

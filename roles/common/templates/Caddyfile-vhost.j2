@@ -1,0 +1,9 @@
+{{ ansible_managed | comment }}
+
+{{ item.scheme|default("http://") }}{{ item.vhostname|default(item.vhost) }} {
+{% if item.target is defined %}
+    reverse_proxy {{ item.target }} {
+    }
+{% endif %}
+  {{ item.instruction|default("") }}
+}

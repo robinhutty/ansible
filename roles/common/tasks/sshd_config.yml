@@ -1,0 +1,15 @@
+# vi: ft=yaml
+- name: Disable password logins
+  when: ansible_system == 'Linux'
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: "{{ item.state | default('present') }}"
+  with_items:
+    - { "regexp": "^#?PasswordAuthentication", "line": "PasswordAuthentication no", "state": "present" }
+    - { "regexp": "^#?UsePAM", "line": "UsePAM no" }
+    - { "regexp": "^#?ChallengeResponseAuthentication", "line": "ChallengeResponseAuthentication no" }
+    - { "regexp": "^#?PermitRootLogin", "line": "PermitRootLogin prohibit-password" }
+    - { "regexp": "^#?X11Forwarding", "line": "X11Forwarding no" }
+  notify: restart sshd

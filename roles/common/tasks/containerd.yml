@@ -1,0 +1,125 @@
+# vi: ft=yaml
+# Prepare containerd and services run by `nerdctl compose`
+
+- name: Installing packages
+  become: true
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: latest
+  loop: "{{ common_containerd.packages }}"
+
+- name: Setting (github) download arch
+  ansible.builtin.set_fact:
+    common_nerdctl_arch: "{{ (ansible_facts['architecture'] == 'x86_64') | ternary('amd64', 'arm64') }}"
+
+- name: Setting (github) download filename
+  ansible.builtin.set_fact:
+    common_nerdctl_filename: "{{ ['nerdctl-full', common_containerd.version, ansible_facts['system'] | lower, common_nerdctl_arch] | join('-') + '.tar.gz' }}"
+
+- name: Setting (github) download URL
+  ansible.builtin.set_fact:
+    common_nerdctl_download_url: "{{ ['https://github.com/containerd/nerdctl/releases/download', 'v' + common_containerd.version, common_nerdctl_filename] | join('/') }}"
+
+- name: Downloading nerdctl
+  ansible.builtin.get_url:
+    checksum: "sha256:https://github.com/containerd/nerdctl/releases/download/v{{ common_containerd.version }}/SHA256SUMS"
+    url: "{{ common_nerdctl_download_url }}"
+    dest: "/tmp/{{ common_nerdctl_filename }}"
+
+- name: Install nerdctl to /usr/local/
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: "/tmp/{{ common_nerdctl_filename }}"
+    dest: /usr/local/
+    creates: /usr/local/bin/nerdctl
+
+- name: Install rootless
+  become: false
+  ansible.builtin.command:
+    creates: "${HOME}/.config/systemd/user/containerd.service"
+    argv:
+      - containerd-rootless-setuptool.sh
+      - install
+
+- name: Install containerd-rootless bypass4netsd
+  become: false
+  ansible.builtin.command:
+    creates: /usr/local/bin/bypass4netnsd
+    argv:
+      - /usr/local/bin/containerd-rootless-setuptool.sh
+      - install-bypass4netnsd
+
+- name: Install containerd-rootless Services
+  become: false
+  ansible.builtin.command:
+    creates: "/usr/local/bin/{{ item }}d"
+    argv:
+      - containerd-rootless-setuptool.sh
+      - "install-{{ item }}"
+  loop:
+    - buildkit
+
+- name: Start/enable service containerd
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop:
+    - containerd
+
+- name: Setup for Compose
+  ansible.builtin.file:
+    path: "/home/{{users.0.username}}/compose/composed/{{ item.name }}"
+    state: directory
+    owner: "{{ users.0.username }}"
+    group: "{{ users.0.username }}"
+  loop: "{{ common_caddy.vhosts }}"
+
+- name: Setup for Compose/Caddy
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ users.0.username }}"
+    group: "{{ users.0.username }}"
+  loop:
+    - "/home/{{ users.0.username }}/compose/caddy/composed"
+
+# TODO: if any of the following are 'changed', notify a handler to nerdctl compose up?
+
+- name: Template primary Compose file
+  ansible.builtin.template:
+    src: ./templates/primary-compose.yaml.j2
+    dest: "/home/{{ users.0.username }}/compose/compose.yaml"
+    mode: '0644'
+
+- name: Template sub Compose files
+  ansible.builtin.template:
+    src: "{{ item.name }}-compose.yaml.j2"
+    dest: "/home/{{ users.0.username }}/compose/composed/{{ item.name }}/{{ item.name }}-compose.yaml"
+    mode: '0644'
+  loop: "{{ common_caddy.vhosts }}"
+
+- name: Template .env for Compose
+  ansible.builtin.template:
+    src: ./templates/compose-dot-env.j2
+    dest: "/home/{{ users.0.username }}/compose/.env"
+    mode: '0644'
+
+- name: Template Caddyfile
+  ansible.builtin.template:
+    src: ./templates/Caddyfile.j2
+    dest: "/home/{{ users.0.username }}/compose/caddy/Caddyfile"
+    mode: '0644'
+
+- name: Template Caddyfile for vhosts
+  ansible.builtin.template:
+    src: ./templates/Caddyfile-vhost.j2
+    dest: "/home/{{ users.0.username }}/compose/caddy/composed/{{ item.name }}"
+    mode: '0644'
+  loop: "{{ common_caddy.vhosts }}"
+
+# - name: Install Compose services
+#   ansible.builtin.template
+#     src: ./templates/compose.yaml.j2
+#     dest: "/home/{{ users.0.username }}/compose/{{ item }}/compose.yaml"
+#   loop: common_composed_services

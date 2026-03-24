@@ -1,0 +1,20 @@
+# vi: ft=yaml
+- name: Install macos config script
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/tmp/{{ item }}"
+    mode: '0755'
+    backup: true
+  with_items:
+    - posix-shlib.sh
+    - setup-macos.sh
+  when:
+    - ansible_facts['distribution'] == "MacOSX"
+
+- name: Execute macos config script
+  become: true
+  ansible.builtin.command:
+    argv:
+      - /tmp/setup-macos.sh
+  when:
+    - ansible_facts['distribution'] == "MacOSX"

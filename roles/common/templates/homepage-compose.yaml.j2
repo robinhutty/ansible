@@ -1,0 +1,31 @@
+{{ ansible_managed | comment }}
+services:
+  homepage:
+    container_name: homepage
+    image: ghcr.io/gethomepage/homepage:${HOMEPAGE_TAG:-${DEFAULT_TAG}}
+    environment:
+      # HOMEPAGE_ALLOWED_HOSTS is required, may need port.
+      HOMEPAGE_ALLOWED_HOSTS: {{ inventory_hostname }} # or set to '*', but see https://gethomepage.dev/installation/#homepage_allowed_hosts
+      # The PUID/PGID variables are sourced from a .env and provide the UID/GID in order to run as non-root. This might require set up of [containerd rootless](https://github.com/containerd/nerdctl/blob/main/docs/rootless.md) or [rootless mode for dockerd/moby](https://rootlesscontaine.rs/getting-started/docker/)
+      # The UID must be part of the 'docker' group in order to use docker integrations
+      PUID: $PUID
+      PGID: $PGID
+
+    # annotations:
+    #   nerdctl/bypass4netns: true  # if running under containerd including via colima
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "500k"
+        max-file: "1"
+
+    networks:
+      - caddy-net
+
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./homepage/config:/app/config # Make sure your local config directory exists
+      - /var/run/docker.sock:/var/run/docker.sock:ro # optional, for docker integrations
+    restart: unless-stopped

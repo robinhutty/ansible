@@ -1,0 +1,39 @@
+{{ ansible_managed | comment }}
+# See https://docs.docker.com/reference/compose-file/
+# See https://docs.docker.com/compose/how-tos/
+
+
+# See https://docs.docker.com/reference/compose-file/include/
+include:
+  # - path: ./pihole/compose.yaml
+{% for vhost in common_caddy.vhosts %}
+   - path: ./composed/{{ vhost.vhost }}/{{ vhost.vhost }}-compose.yaml
+{% endfor %}
+
+# # ref: https://hub.docker.com/_/caddy
+networks:
+  caddy-net:
+    driver: bridge
+    name: caddy-net
+
+services:
+
+  caddy:
+    container_name: caddy
+    image: caddy:${CADDY_TAG:-${DEFAULT_TAG}}
+    restart: unless-stopped
+
+    # annotations:
+    #   nerdctl/bypass4netns: true
+
+    networks:
+      - caddy-net
+
+    ports:
+      - "8080:80/tcp"
+      - "8443:443/tcp"
+      - "8443:443/udp"
+    volumes:
+      # - ./caddy/conf:/etc/caddy # must contain the Caddyfile (or JSON-based Caddy config: https://caddyserver.com/docs/json)
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile # config file on host for easy editing.
+      - ./caddy/composed:/etc/caddy/composed # config files on host for easy editing.

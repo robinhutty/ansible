@@ -1,0 +1,90 @@
+# vi: ft=yaml
+# This file has a miscellany of configuration aimed at my use case for headless Raspberry Pi servers
+- name: Install argon-one config script
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/tmp/{{ item }}"
+    mode: '0755'
+    backup: true
+  with_items:
+    - argon-one.sh
+  when:
+    - ansible_facts['architecture'] == 'aarch64' and ansible_facts['system'] == 'Linux'
+
+- name: Execute argon-one config script
+  become: true
+  ansible.builtin.command:
+    argv:
+      - /tmp/argon-one.sh
+    creates: /etc/argononed.conf
+  when:
+    - ansible_facts['architecture'] == 'aarch64' and ansible_facts['system'] == 'Linux'
+
+- name: Install log2ram on Pi
+  become: true
+  ansible.builtin.package:
+    name: log2ram
+    state: latest
+  when:
+    - ansible_facts['architecture'] == 'aarch64' and ansible_facts['system'] == 'Linux'
+
+- name: Enable zram, compressed RAM storage for log2ram
+  ansible.builtin.lineinfile:
+    path: /etc/log2ram.conf
+    regexp: '^ZL2R='
+    line: ZL2R=true
+
+- name: Use zstd compression for log2ram zram
+  ansible.builtin.lineinfile:
+    path: /etc/log2ram.conf
+    regexp: '^COMP_ALG='
+    line: COMP_ALG=zstd
+
+- name: Use rsync for log2ram
+  ansible.builtin.lineinfile:
+    path: /etc/log2ram.conf
+    regexp: '^USE_RSYNC='
+    line: USE_RSYNC=true
+
+- name: Start/Enable log2ram service
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop: [log2ram]
+
+# # See https://github.com/azlux/log2ram/issues/259 and https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1122989
+- name: Determine whether log2ram.lograte exists in a subdir
+  ansible.builtin.stat:
+    path: /etc/logrotate.d/log2ram/log2ram.logrotate
+    get_checksum: false
+  register: common_logrotate_log2ram_subdir
+
+- name: Move logrotate file for log2ram (Trixie)
+  ansible.builtin.command:
+    argv:
+      - mv
+      - /etc/logrotate.d/log2ram/log2ram.logrotate
+      - /etc/logrotate.d/log2ram.logrotate
+    creates: /etc/logrotate.d/log2ram.logrotate
+  when:
+    - common_logrotate_log2ram_subdir.stat.exists
+    - ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] == '13'
+
+# See also: /etc/systemd/journald.conf, systemd-journald.service(8), and journalctl(1)
+- name: Vacuum journald log by time
+  ansible.builtin.command:
+    cmd: "journalctl --vacuum-time={{ common_journalctl.vacuum_retention | default('60d') }}"
+  register: common_vacuum_time
+  changed_when: "'Deleted' in common_vacuum_time.stdout"
+
+- name: Vacuum journald log by size
+  ansible.builtin.command:
+    cmd: "journalctl --vacuum-size={{ common_journalctl.vacuum_size | default('2G') }}"
+  register: common_vacuum_size
+  changed_when: "'Deleted' in common_vacuum_size.stdout"
+
+# TODO: remote logging
+# TODO: ntfy
+# TODO: system mail notifications go via postfix -> fastmail
+# TODO: Look at https://wiki.archlinux.org/title/Solid_state_drive#TRIM for configuring SSDs in fstab

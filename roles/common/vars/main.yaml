@@ -1,0 +1,262 @@
+---
+common_journalctl:
+  # delete logs older than N
+  vacuum_retention: 30d
+  # trim log to N
+  vacuum_size: 2G
+common_locales:
+  - en_US.UTF-8
+common_timezone: America/New_York
+
+common_caddy:
+  vhosts:
+    - vhost: hello
+      name: hello
+      instruction: 'respond "Hi"'
+    - vhost: homepage
+      name: homepage
+      scheme: "http://"
+      vhostname: dash
+      target: "homepage:3000"
+
+common_containerd:
+  nerdctl:
+    url: https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_VERSION}/nerdctl-full-${NERDCTL_VERSION}-linux-arm64.tar.gz
+  packages: [containerd, uidmap, gnupg2]
+  version: 2.2.1
+
+common_composed_services:
+  - homepage
+  - ntfy
+
+common_packages:
+
+# Package management in this role uses:
+#   - ansible_system: { Linux, Darwin }
+#   - ansible_architecture (linux => {x86_64, aarch64}, darwin => {arm64})
+#   - ansible_distribution ( {Debian, Ubuntu, MacOSX})
+#   - ansible_distribution_major_version: { Debian => [12], Ubuntu => [22, 24], MacOSX => [14, 15] }
+# [Our?] Armbian systems show up as Ubuntu, either 22 or 24
+
+  common:
+  # These should be available in the default package manager for _all_ supported os/distros
+    - curl
+    - git
+    - jq
+    - lrzip
+    - pigz
+    - pv
+    - pwgen
+    - ripgrep
+    - rsync
+    - tmux
+    - tree
+    - vim
+    - wget
+    - zstd
+
+  Debian_12:
+    - debian-goodies
+    - docker-ce
+    - docker-ce-cli
+    - docker-ce-rootless-extras
+    - docker-compose-plugin
+    - fwupd
+    - rust-coreutils
+    - yq
+
+  Debian_13:
+    - debian-goodies
+    # - docker-cli
+    # - docker-compose
+    - fwupd
+    - gnupg2
+    - rust-coreutils
+    - sudo
+    - yq
+
+  Ubuntu_22:
+    - debian-goodies
+    - docker-buildx-plugin
+    - docker-ce
+    - docker-ce-cli
+    - docker-ce-rootless-extras
+    - docker-compose-plugin
+    - fwupd
+    - fwupd-signed
+    - secureboot-db
+
+  Ubuntu_24:
+    - docker-buildx
+    - docker.io
+    - docker-compose-v2
+    - fwupd
+    - fwupd-signed
+    - needrestart
+    - rust-coreutils
+    - rust-findutils
+    - secureboot-db
+    - ssmtp
+    - yq
+
+  # Armbian25+, based on availability in Ubuntu 24.04.x (Noble)
+  # Ubuntu_aarch64: &pi []
+
+  # Darwin_arm64: &apple_silicon []
+
+common_brew_basepath:
+  Linux: /home/linuxbrew/.linuxbrew
+  Darwin: /opt/homebrew
+
+common_brew_taps:
+  common:
+    - jmespath/jmespath
+
+common_brew_formulae:
+  common:
+    # experimental
+    - atuin-server    # atuin-server: Sync server for atuin - Improved shell history
+    - garden          # Grow and cultivate collections of Git trees
+    - kubectl-tree    # plugin to browse Kubernetes object hierarchies
+    - sem-cli         # Semantic version control CLI with entity-level diffs and blame
+    - weave           # Entity-level semantic merge driver for Git
+
+    - awscli
+    - bat
+    - bat-extras
+    - binutils
+    - cosign
+    - curl
+    - diffnav
+    - difi
+    - dua-cli
+    - duf
+    - parallel-disk-usage
+    - eza
+    - forgejo-cli
+    - gcli
+    - gh
+    - git
+    - git-get # manage multiple git repos: https://github.com/grdl/git-get
+    - glab
+    - hl    # log viewer
+    - htop
+    - infat   # Tool to set default openers: https://github.com/philocalyst/infat
+    - jmespath/jmespath/jp
+    - nerdlog
+    - pstree
+    - pv
+    - ripgrep-all
+    - sops
+    - zns   # dns cli
+
+    - jq
+    - yq
+    - netcat
+    - socat
+    - somo   # modern alternative to netstat
+    - tenv
+    - tmux
+    # https://uutils.github.io/
+    - uutils-diffutils
+    - uutils-findutils
+    - xz
+    - zstd
+
+  Linux:
+    - tenv
+
+  Darwin:
+    - font-vollkorn
+    - font-vollkorn-sc
+    - gnu-sed
+    - lima
+    - lima-additional-guestagents
+    - socket_vmnet
+    - mac-cleanup-py # https://github.com/mac-cleanup/mac-cleanup-py
+    - mist-cli # https://github.com/ninxsoft/mist-cli
+    - zsh
+    - zsh-completions
+    - zsh-syntax-highlighting
+    # Casks
+    - iina
+    - koodo-reader
+    - ollama-app
+    - qobuz
+    - reaper
+    - skim
+    - wifitui
+    - witr # "why is this running?"
+    - vlc
+
+  workstation:
+    - asciidoctor
+    - prettier
+    - vale
+    - checkov
+    - deno
+    - cpdf  # cli tools for pdf manipulation
+    - diff-pdf
+    - diffnav  # git diff pager based on delta but with a filetree
+    - doxx  # tui for .docx
+    - fx    # tui for json
+    - httpie
+    - naabu  # Fast port scanner: https://docs.projectdiscovery.io/tools/naabu/overview
+    - nb
+
+    # - huggingface-cli # obsoleted (for me) by ollama and/or 'models'?
+    - models       # for browsing AI models, etc.
+    - ollama
+    - opencode     # or use anomalyco/tap/opencode?
+    - skills       # Open agent skills ecosystem
+
+    - pvetui # Proxmox VE TUI
+    - shellcheck
+    - shfmt
+    - terraform-docs
+    - terraform-graph-beautifier
+    - terraform-module-versions
+    - tfocus
+    - tflint
+    - tfstate-lookup
+    - tenv
+    - trivy
+    - wego  # Weather app for the terminal, https://github.com/schachmat/wego
+    # - stormy  # weather tui
+    - wget
+    - worktrunk # git worktree mgmt: https://worktrunk.dev
+    - yazi
+
+    - cmark
+    - comrak
+    - glow
+    - mq
+    - markdownlint-cli
+
+    - notmuch
+    - offlineimap
+    - meli  # email tui
+
+    - mpv
+
+  minimal: []
+
+  server: []
+    # - caddy
+    # - incus
+    # - forgejo
+    # - garage # s3 server: https://garagehq.deuxfleurs.fr/documentation
+    # - git-pages
+    # - ntfy
+
+  maxi:
+    - telnet
+
+## TODO
+# vmhost_debian13:
+#   - vde2
+#   - libguestfs-tools
+
+common_undesirable_packages:
+  Ubuntu:
+    - snapd

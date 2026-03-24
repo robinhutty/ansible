@@ -1,0 +1,20 @@
+# vi: ft=yaml
+# Configure some local users
+
+- name: Add admin users
+  ansible.builtin.user:
+    name: "{{ item.username }}"
+    comment: "{{ item.displayname }}"
+    groups: sudo,docker,staff
+    append: true  # append the user to groups not clobber
+  when: ansible_facts['system'] == "Linux"
+  loop: "{{ users }}"
+
+- name: Set authorized key for current user copying it from current user
+  # The comment for the ssh key is the first available of email address, displayname, username
+  ansible.posix.authorized_key:
+    user: "{{ item.username }}"
+    key: "{{ item.ssh_key }}"
+    comment: "{{ item.email | default(item.displayname | default(item.username)) }}"
+  when: item.ssh_key is defined
+  loop: "{{ users }}"
