@@ -1,0 +1,48 @@
+# vi: ft=yaml
+---
+# See https://nsd.docs.nlnetlabs.nl/
+
+- name: Install nsd package
+  become: true
+  ansible.builtin.package:
+    name: nsd
+    state: latest
+  when: ansible_facts['system'] == "Linux"
+
+# - name: Install nsd from homebrew
+#   become: false
+#   environment:
+#     NONINTERACTIVE: "1"
+#   ansible.builtin.homebrew:
+#     name: nsd
+#     state: latest
+
+- name: Render templated nsd.conf
+  ansible.builtin.template:
+    src: ./templates/nsd.conf.j2
+    dest: /etc/nsd/nsd.conf
+    mode: '0644'
+  notify:
+    - Restart nsd
+
+- name: Render templated per-zone config for nsd
+  ansible.builtin.template:
+    src: ./templates/nsd.conf.d-zone.j2
+    dest: "/etc/nsd/nsd.conf.d/{{ item.name }}.conf"
+    mode: '0644'
+  loop: "{{ nsd_zones | default([]) }}"
+  notify:
+    - Restart nsd
+
+- name: Install nsd zonefiles
+  ansible.builtin.copy:
+    src: "{{ item.name }}.zone"
+    dest: "/etc/nsd/{{ item.name }}.zone"
+    mode: '0644'
+    backup: true
+  loop: "{{ nsd_zones | default([]) }}"
+  notify:
+    - Restart nsd
+
+# TODO: nsd-checkconf
+# TODO: nsd-checkzone

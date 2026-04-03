@@ -1,0 +1,6 @@
+{{ ansible_managed | comment }}
+# https://nsd.docs.nlnetlabs.nl
+
+zone:
+    name: {{ item.name }}
+    zonefile: {{ item.name }}.zone

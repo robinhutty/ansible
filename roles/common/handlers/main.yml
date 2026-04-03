@@ -1,0 +1,11 @@
+---
+# - name: "Restart Compose'd caddy"
+#   become: true
+#   ansible.builtin.command:
+#     argv:
+#       - nerdctl compose restart ...
+
+- name: Restart nsd
+  service:
+    name: nsd
+    state: restarted

@@ -1,0 +1,41 @@
+$ORIGIN agbo.internal.
+$TTL 86400 ; default time-to-live for this zone
+; Annotated with some comments, but see https://nsd.docs.nlnetlabs.nl/en/latest/zonefile.html
+; NOTE: @ is substituted throughout with the value in $ORIGIN
+
+@   IN  SOA     ns1.agbo.internal. ns2.agbo.internal. (
+        2026040201  ;Serial
+        7200        ;Refresh
+        3600        ;Retry
+        1209600     ;Expire
+        3600        ;Negative response caching TTL
+)
+
+
+; The nameservers that are authoritative for this zone.
+@                       NS        agbo.internal.
+
+; A and AAAA records are for IPv4 and IPv6 addresses respectively
+@                       A       192.168.1.2
+ns1                     A       192.168.1.2
+ns2                     A       192.168.1.2
+argon                   A       192.168.1.2
+hp8                     A       192.168.1.3
+gmk                     A       192.168.1.5
+nuc                     A       192.168.1.18
+
+
+; CNAME record redirects from www.allgoodbits.org to allgoodbits.org
+www                     CNAME   @
+
+; MX records specify Mail eXchangers
+;mail                    MX  10 allgoodbits.org.
+
+; Extras:
+; TXT records for mail (DKIM, SPF, DMARC)
+;@                       TXT       "v=spf1 a:smtp.example.com ip4:192.0.2.1 ip6:2001:db8::3 -all"
+;_domainkey              TXT       "t=n;o=-"
+;mail._domainkey         TXT       "v=DKIM1;..."
+
+; SRV records
+; SSHFP records

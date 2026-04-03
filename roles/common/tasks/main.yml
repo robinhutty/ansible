@@ -316,3 +316,11 @@
         - containerd
   when:
     - ansible_facts['distribution'] == "Debian"
+
+- name: Include nsd.yml
+  ansible.builtin.include_tasks:
+    file: "{{ item }}.yml"
+  with_items:
+    - nsd
+  # when:
+  #   - "item in group_names"

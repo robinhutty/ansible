@@ -1,0 +1,14 @@
+{{ ansible_managed | comment }}
+# https://nsd.docs.nlnetlabs.nl
+
+server:
+    identity: {{ nsd_identity|default('rhu') }}
+    port: {{ nsd_port|default(5353) }}
+    log-time-ascii: yes
+    log-time-iso: yes
+
+remote-control:
+    control-enable: yes
+    control-interface: lo
+
+include: "/etc/nsd/nsd.conf.d/*.conf"
