@@ -22,7 +22,7 @@
 #   - ansible_facts['distribution_major_version']: { Debian => [12,13], Ubuntu => [22,24], MacOSX => [14,15] }
 
 - name: Install common packages
-  become: "{{ (ansible_facts['system'] == 'Linux')|ternary(true,false) }}"
+  become: "{{ (ansible_facts['system'] == 'Linux') | ternary(true, false) }}"
   ansible.builtin.package:
     name: "{{ common_packages.common }}"
     state: latest
@@ -30,16 +30,16 @@
   # when: ansible_facts['system'] == 'Linux'
 
 - name: Uninstall common undesirable packages
-  become: "{{ (ansible_facts['system'] == 'Linux')|ternary(true,false) }}"
+  become: "{{ (ansible_facts['system'] == 'Linux') | ternary(true, false) }}"
   ansible.builtin.package:
-    name: "{{ common_undesirable_packages[ansible_facts['distribution']]|default(omit) }}"
+    name: "{{ common_undesirable_packages[ansible_facts['distribution']] | default(omit) }}"
     state: absent
     purge: true
   # Remove this condition once we can install on all inventory distros?
   when: ansible_facts['system'] == 'Linux' and ansible_facts['hostname'] != 'x1c'
 
 - name: Install distro packages
-  become: "{{ (ansible_facts['system'] == 'Linux')|ternary(true,false) }}"
+  become: "{{ (ansible_facts['system'] == 'Linux') | ternary(true, false) }}"
   ansible.builtin.package:
     name: "{{ common_packages[ansible_facts['distribution'] + '_' + ansible_facts['distribution_major_version']] | default(omit) }}"
     state: latest
@@ -64,7 +64,7 @@
 # fwupdmgr -y refresh && fwupdmgr -y upgrade
 
 - name: Check whether Homebrew is installed
-  stat:
+  ansible.builtin.stat:
     path: "{{ common_brew_basepath[ansible_facts['system']] + '/bin/brew' }}"
   register: homebrew_check
   # when:
@@ -190,11 +190,11 @@
   environment:
     NONINTERACTIVE: 1
   ansible.builtin.homebrew:
-    name: "{{ common_brew_formulae.common + common_brew_formulae[ansible_facts['system']] | default ([]) }}"
+    name: "{{ common_brew_formulae.common + common_brew_formulae[ansible_facts['system']] | default([]) }}"
     path: "{{ common_brew_basepath[ansible_facts['system']] + '/bin' }}"
     state: latest
     upgrade_all: true
-    update_homebrew: "{{ (ansible_facts['system'] == 'Linux')|ternary(not homebrew_updated.changed,false) }}"
+    update_homebrew: "{{ (ansible_facts['system'] == 'Linux') | ternary(not homebrew_updated.changed, false) }}"
   when:
     - homebrew_check.stat.exists or homebrew_installed.changed
   register: homebrew_formulae
@@ -222,7 +222,7 @@
   environment:
     NONINTERACTIVE: 1
   ansible.builtin.homebrew:
-    name: "{{ common_brew_formulae[item] | default (common_brew_formulae['minimal']) }}"
+    name: "{{ common_brew_formulae[item] | default(common_brew_formulae['minimal']) }}"
     path: "{{ common_brew_basepath[ansible_facts['system']] + '/bin' }}"
     state: latest
     update_homebrew: false
@@ -292,7 +292,7 @@
 
 - name: Check whether snapd is installed
   tags: debug
-  stat:
+  ansible.builtin.stat:
     path: /usr/bin/snap
   register: snapd_check
 
