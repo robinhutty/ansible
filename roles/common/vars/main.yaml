@@ -241,7 +241,7 @@ common_brew_formulae:
 
   minimal: []
 
-  server: []
+  server:
     # - caddy
     # - incus
     # - forgejo

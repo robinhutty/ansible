@@ -38,6 +38,7 @@ macos_version=$(sw_vers --productVersion)
 macos_major_version=$(echo "$macos_version" | cut -d. -f1)
 macos_minor_version=$(echo "$macos_version" | cut -d. -f2)
 case "$macos_major_version" in # See https://en.wikipedia.org/wiki/MacOS#Release_history
+  26) macos_ver_name="Tahoe" ;;
   15) macos_ver_name="Sequoia" ;;
   14) macos_ver_name="Sonoma" ;;
   13) macos_ver_name="Ventura" ;;
