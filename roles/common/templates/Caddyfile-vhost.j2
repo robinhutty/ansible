@@ -1,9 +1,26 @@
 {{ ansible_managed | comment }}
 
-{{ item.scheme|default("http://") }}{{ item.vhostname|default(item.vhost) }} {
+{% if "https" in item.scheme | default("https://") %}
+
+{{ item.scheme|default("https://") }}{{ item.vhostname|default(item.vhost) }}, {{ item.scheme|default("https://") }}{{ item.vhostname|default(item.vhost) }}.{{ external_domain }} {
+
 {% if item.target is defined %}
     reverse_proxy {{ item.target }} {
     }
 {% endif %}
   {{ item.instruction|default("") }}
+  auto_https: {{ item.auto_https | default("on") }}
+}
+{% endif %}
+
+http://{{ item.vhostname|default(item.vhost) }}, http://{{ item.vhostname|default(item.vhost) }}.{{ lan.domain }}{
+
+{% if item.target is defined %}
+    reverse_proxy {{ item.target }} {
+    }
+{% endif %}
+  {{ item.instruction|default("") }}
+  auto_https: {{ item.auto_https | default("off") }}
+}
+
 }

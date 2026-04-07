@@ -1,11 +1,17 @@
 ---
-# - name: "Restart Compose'd caddy"
-#   become: true
-#   ansible.builtin.command:
-#     argv:
-#       - nerdctl compose restart ...
+- name: "Restart composed service {{ item.name }}"
+  become: true
+  ansible.builtin.command:
+    cmd: "nerdctl compose restart {{ item.name }}"
+    chdir: "/home/{{ users.0.username }}/compose/"
+  with_items: "{{ common_composed_services }}"
+
+- name: "Restart composed Caddy"
+  become: true
+  ansible.builtin.command:
+    cmd: "nerdctl compose restart caddy"
 
 - name: Restart nsd
-  service:
+  ansible.builtin.service:
     name: nsd
     state: restarted

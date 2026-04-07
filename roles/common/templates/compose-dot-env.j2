@@ -1,4 +1,6 @@
 {{ ansible_managed | comment }}
-COMPOSE_PROJECT_NAME={{ external | default(inventory_hostname) }}
+COMPOSE_PROJECT_NAME={{ inventory_hostname }}
 DEFAULT_TAG=latest
-CADDY_TAG=2.10.2
+CADDY_TAG={{ common_caddy.tag | default("latest") }}
+PUID=1000
+PGID=1000

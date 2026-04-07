@@ -1,4 +1,7 @@
+# vi: ft=yaml
 ---
+common_admin_groups: ["sudo", "docker", "staff"]
+
 common_journalctl:
   # delete logs older than N
   vacuum_retention: 30d
@@ -8,26 +11,15 @@ common_locales:
   - en_US.UTF-8
 common_timezone: America/New_York
 
-common_caddy:
-  vhosts:
-    - vhost: hello
-      name: hello
-      instruction: 'respond "Hi"'
-    - vhost: homepage
-      name: homepage
-      scheme: "http://"
-      vhostname: dash
-      target: "homepage:3000"
-
 common_containerd:
   nerdctl:
     url: https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_VERSION}/nerdctl-full-${NERDCTL_VERSION}-linux-arm64.tar.gz
+    version: 2.2.2
   packages: [containerd, uidmap, gnupg2]
-  version: 2.2.1
 
 common_composed_services:
-  - homepage
-  - ntfy
+  # - homepage
+  # - ntfy
 
 common_packages:
 
@@ -260,3 +252,5 @@ common_brew_formulae:
 common_undesirable_packages:
   Ubuntu:
     - snapd
+
+# vi: ft=yaml

@@ -14,15 +14,15 @@
 
 - name: Setting (github) download filename
   ansible.builtin.set_fact:
-    common_nerdctl_filename: "{{ ['nerdctl-full', common_containerd.version, ansible_facts['system'] | lower, common_nerdctl_arch] | join('-') + '.tar.gz' }}"
+    common_nerdctl_filename: "{{ ['nerdctl-full', common_containerd.nerdctl.version, ansible_facts['system'] | lower, common_nerdctl_arch] | join('-') + '.tar.gz' }}"
 
 - name: Setting (github) download URL
   ansible.builtin.set_fact:
-    common_nerdctl_download_url: "{{ ['https://github.com/containerd/nerdctl/releases/download', 'v' + common_containerd.version, common_nerdctl_filename] | join('/') }}"
+    common_nerdctl_download_url: "{{ ['https://github.com/containerd/nerdctl/releases/download', 'v' + common_containerd.nerdctl.version, common_nerdctl_filename] | join('/') }}"
 
 - name: Downloading nerdctl
   ansible.builtin.get_url:
-    checksum: "sha256:https://github.com/containerd/nerdctl/releases/download/v{{ common_containerd.version }}/SHA256SUMS"
+    checksum: "sha256:https://github.com/containerd/nerdctl/releases/download/v{{ common_containerd.nerdctl.version }}/SHA256SUMS"
     url: "{{ common_nerdctl_download_url }}"
     dest: "/tmp/{{ common_nerdctl_filename }}"
 
@@ -69,7 +69,7 @@
 
 - name: Setup for Compose
   ansible.builtin.file:
-    path: "/home/{{users.0.username}}/compose/composed/{{ item.name }}"
+    path: "/home/{{ users.0.username }}/compose/composed/{{ item.name }}"
     state: directory
     owner: "{{ users.0.username }}"
     group: "{{ users.0.username }}"
@@ -84,42 +84,46 @@
   loop:
     - "/home/{{ users.0.username }}/compose/caddy/composed"
 
-# TODO: if any of the following are 'changed', notify a handler to nerdctl compose up?
-
 - name: Template primary Compose file
   ansible.builtin.template:
     src: ./templates/primary-compose.yaml.j2
     dest: "/home/{{ users.0.username }}/compose/compose.yaml"
     mode: '0644'
+    owner: "{{ users.0.username }}"
+    group: "{{ users.0.username }}"
 
 - name: Template sub Compose files
   ansible.builtin.template:
     src: "{{ item.name }}-compose.yaml.j2"
     dest: "/home/{{ users.0.username }}/compose/composed/{{ item.name }}/{{ item.name }}-compose.yaml"
     mode: '0644'
-  loop: "{{ common_caddy.vhosts }}"
+    owner: "{{ users.0.username }}"
+    group: "{{ users.0.username }}"
+  loop: "{{ common_composed_services }}"
+  notify: "Restart composed service {{ item.name }}"
 
 - name: Template .env for Compose
   ansible.builtin.template:
     src: ./templates/compose-dot-env.j2
     dest: "/home/{{ users.0.username }}/compose/.env"
     mode: '0644'
+    owner: "{{ users.0.username }}"
+    group: "{{ users.0.username }}"
 
 - name: Template Caddyfile
   ansible.builtin.template:
     src: ./templates/Caddyfile.j2
     dest: "/home/{{ users.0.username }}/compose/caddy/Caddyfile"
     mode: '0644'
+    owner: "{{ users.0.username }}"
+    group: "{{ users.0.username }}"
+  notify: "Restart composed Caddy"
 
 - name: Template Caddyfile for vhosts
   ansible.builtin.template:
     src: ./templates/Caddyfile-vhost.j2
-    dest: "/home/{{ users.0.username }}/compose/caddy/composed/{{ item.name }}"
+    dest: "/home/{{ users.0.username }}/compose/caddy/composed/{{ item.id }}"
     mode: '0644'
+    owner: "{{ users.0.username }}"
+    group: "{{ users.0.username }}"
   loop: "{{ common_caddy.vhosts }}"
-
-# - name: Install Compose services
-#   ansible.builtin.template
-#     src: ./templates/compose.yaml.j2
-#     dest: "/home/{{ users.0.username }}/compose/{{ item }}/compose.yaml"
-#   loop: common_composed_services

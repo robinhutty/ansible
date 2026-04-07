@@ -22,4 +22,6 @@ servers {
     # enable_full_duplex
 }
 
-import composed/*
+{% for vhost in common_caddy.vhosts %}
+import composed/caddy/composed/{{ vhost.id }}
+{% endfor %}

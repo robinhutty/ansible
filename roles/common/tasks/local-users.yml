@@ -4,9 +4,9 @@
 - name: Add admin users
   ansible.builtin.user:
     name: "{{ item.username }}"
-    comment: "{{ item.displayname }}"
-    groups: sudo,docker,staff
-    append: true  # append the user to groups not clobber
+    comment: "{{ item.displayname | default(item.username) }}"
+    groups: "{{ common_admin_groups | default('sudo') }}"
+    append: true  # do not clobber existing groups
   when: ansible_facts['system'] == "Linux"
   loop: "{{ users }}"
 

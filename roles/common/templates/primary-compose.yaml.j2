@@ -2,12 +2,11 @@
 # See https://docs.docker.com/reference/compose-file/
 # See https://docs.docker.com/compose/how-tos/
 
-
 # See https://docs.docker.com/reference/compose-file/include/
 include:
   # - path: ./pihole/compose.yaml
-{% for vhost in common_caddy.vhosts %}
-   - path: ./composed/{{ vhost.vhost }}/{{ vhost.vhost }}-compose.yaml
+{% for svc in common_composed_services %}
+   - path: ./composed/{{ svc.name }}/{{ svc.name }}-compose.yaml
 {% endfor %}
 
 # # ref: https://hub.docker.com/_/caddy
