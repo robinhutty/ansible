@@ -141,7 +141,6 @@ common_brew_formulae:
     - glab
     - hl    # log viewer
     - htop
-    - infat   # Tool to set default openers: https://github.com/philocalyst/infat
     - jmespath/jmespath/jp
     - nerdlog
     - pstree
@@ -170,6 +169,7 @@ common_brew_formulae:
     - font-vollkorn
     - font-vollkorn-sc
     - gnu-sed
+    - infat   # Tool to set default openers: https://github.com/philocalyst/infat
     - lima
     - lima-additional-guestagents
     - socket_vmnet
