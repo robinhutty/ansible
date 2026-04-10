@@ -1,6 +1,14 @@
 {{ ansible_managed | comment }}
-COMPOSE_PROJECT_NAME={{ inventory_hostname }}
-DEFAULT_TAG=latest
-CADDY_TAG={{ common_caddy.tag | default("latest") }}
-PUID=1000
-PGID=1000
+{% if item.name == "_compose_root" %}
+
+{% for k,v in COMPOSE_ROOT_VARS|items %}
+{{ k }}={{ v }}
+{% endfor %}
+
+{% else %}
+
+{% for k,v in item.compose_vars|items %}
+{{ k }}={{ v }}
+{% endfor %}
+
+{% endif %}

@@ -1,4 +1,6 @@
+{# Jinja2 template docs: https://jinja.palletsprojects.com/en/latest/templates #}
 {{ ansible_managed | comment }}
+{{ "Caddy docs: https://caddyserver.com/docs" | comment }}
 
 {% if "https" in item.scheme | default("https://") %}
 
@@ -9,18 +11,14 @@
     }
 {% endif %}
   {{ item.instruction|default("") }}
-  auto_https: {{ item.auto_https | default("on") }}
 }
 {% endif %}
 
-http://{{ item.vhostname|default(item.vhost) }}, http://{{ item.vhostname|default(item.vhost) }}.{{ lan.domain }}{
+http://{{ item.vhostname|default(item.vhost) }}, http://{{ item.vhostname|default(item.vhost) }}.{{ lan.domain }} {
 
 {% if item.target is defined %}
     reverse_proxy {{ item.target }} {
     }
 {% endif %}
   {{ item.instruction|default("") }}
-  auto_https: {{ item.auto_https | default("off") }}
-}
-
 }

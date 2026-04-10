@@ -17,9 +17,10 @@ common_containerd:
     version: 2.2.2
   packages: [containerd, uidmap, gnupg2]
 
-common_composed_services:
-  # - homepage
-  # - ntfy
+# common_composed_services:
+  # - name: homepage
+  #   compose_vars:
+  #     HOMEPAGE_ALLOWED_HOSTS:
 
 common_packages:
 

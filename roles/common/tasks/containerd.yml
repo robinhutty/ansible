@@ -69,7 +69,7 @@
 
 - name: Setup for Compose
   ansible.builtin.file:
-    path: "/home/{{ users.0.username }}/compose/composed/{{ item.name }}"
+    path: "/home/{{ users.0.username }}/compose/composed/{{ item.id }}"
     state: directory
     owner: "{{ users.0.username }}"
     group: "{{ users.0.username }}"
@@ -109,6 +109,23 @@
     mode: '0644'
     owner: "{{ users.0.username }}"
     group: "{{ users.0.username }}"
+  loop:
+    - name: _compose_root
+  vars:
+    COMPOSE_ROOT_VARS:
+      COMPOSE_PROJECT_NAME: "{{ inventory_hostname }}"
+      CADDY_TAG: "latest"
+      DEFAULT_TAG: "latest"
+
+- name: Template .env for sub Compose
+  ansible.builtin.template:
+    src: ./templates/compose-dot-env.j2
+    dest: "/home/{{ users.0.username }}/compose/composed/{{ item.name }}/.env"
+    mode: '0644'
+    owner: "{{ users.0.username }}"
+    group: "{{ users.0.username }}"
+  loop: "{{ common_composed_services }}"
+  notify: "Restart composed service {{ item.name }}"
 
 - name: Template Caddyfile
   ansible.builtin.template:

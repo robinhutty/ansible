@@ -1,3 +1,4 @@
+{# Jinja2 template docs: https://jinja.palletsprojects.com/en/latest/templates #}
 {{ ansible_managed | comment }}
 # commit: {{ lookup('pipe', 'git rev-parse --short HEAD') }}
 {
@@ -8,7 +9,7 @@
   default_sni {{ external_domain }}
 
   # In case I want to _disable_ Caddy's automagic for HTTPS: https://caddyserver.com/docs/automatic-https
-  auto_https off
+  auto_https {{ common_caddy.auto_https | default("off") }}
 
   metrics {
     per_host
@@ -23,5 +24,5 @@ servers {
 }
 
 {% for vhost in common_caddy.vhosts %}
-import composed/caddy/composed/{{ vhost.id }}
+import composed/{{ vhost.id }}
 {% endfor %}
