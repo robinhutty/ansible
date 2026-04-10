@@ -63,6 +63,7 @@ common_packages:
     # - docker-compose
     - fwupd
     - gnupg2
+    - iproute2
     - rust-coreutils
     - sudo
     - yq
@@ -155,7 +156,7 @@ common_brew_formulae:
     - zstd
 
   Linux:
-    - tenv
+    - iproute2
 
   Darwin:
     - font-vollkorn
@@ -186,7 +187,7 @@ common_brew_formulae:
     - prettier
     - vale
     - checkov
-    - deno
+    # - deno
     - cpdf  # cli tools for pdf manipulation
     - diff-pdf
     - diffnav  # git diff pager based on delta but with a filetree
