@@ -70,6 +70,7 @@ common_packages:
     - fwupd
     - gnupg2
     - iproute2
+    - ldnsutils         # replace with https://dnst.docs.nlnetlabs.nl/ ?
     - rust-coreutils
     - sudo
     - yq
