@@ -4,7 +4,7 @@
 server:
     identity: {{ nsd.identity|default('rhu') }}
     # ip-address: 0.0.0.0
-    port: {{ nsd_port|default(5353) }}
+    port: {{ nsd.port|default(5353) }}
     log-time-ascii: yes
     log-time-iso: yes
     hide-version: no
