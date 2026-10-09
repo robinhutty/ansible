@@ -1,3 +1,4 @@
+# vi: ft=yaml
 ---
 - name: "Restart composed service homepage"
   become: true
@@ -17,8 +18,20 @@
     cmd: "nerdctl compose restart caddy"
     chdir: "/home/{{ users.0.username }}/compose/"
 
+- name: Restart systemd-resolved
+  become: true
+  ansible.builtin.service:
+    name: systemd-resolved
+    state: restarted
+
 - name: Restart nsd
   become: true
   ansible.builtin.service:
     name: nsd
+    state: restarted
+
+- name: Restart unbound
+  become: true
+  ansible.builtin.service:
+    name: unbound
     state: restarted

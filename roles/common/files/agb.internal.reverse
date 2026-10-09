@@ -4,7 +4,7 @@ $TTL 86400 ; default time-to-live for this zone
 ; NOTE: @ is substituted throughout with the value in $ORIGIN
 
 168.192.in-addr.arpa.   IN  SOA     ns1.agb.internal. ns2.agb.internal. (
-        2026100801  ;Serial
+        2026101001  ;Serial
         7200        ;Refresh
         3600        ;Retry
         1209600     ;Expire

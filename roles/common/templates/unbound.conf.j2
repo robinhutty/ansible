@@ -1,0 +1,71 @@
+{{ ansible_managed | comment }}
+# https://unbound.docs.nlnetlabs.nl
+# https://github.com/NLnetLabs/unbound/blob/master/doc/example.conf.in
+
+server:
+    do-ip4: yes
+    do-ip6: yes
+    prefer-ip4: yes
+    interface: 0.0.0.0
+    interface: ::0
+    port: {{ unbound.port|default(5353) }}
+    do-udp: yes
+    do-tcp: yes
+    do-not-query-localhost: no                  # required to be able to reach NSD on localhost
+
+    # The resolver's (CIDR) Allow-list: RFC1918 reserved addresses
+    access-control: 10.0.0.0/8 allow
+    access-control: 127.0.0.0/8 allow
+    access-control: 172.16.0.0/12 allow
+    access-control: 192.168.0.0/16 allow
+    access-control: 169.254.0.0/16 allow        # unicast link-local
+    access-control: 224.0.0.0/24 allow          # multicast link-local
+    access-control: ::1 allow
+    access-control: ::ffff:127.0.0.1 allow
+
+    private-domain: "{{ lan.domain }}"
+    domain-insecure: "{{ lan.domain }}"
+    # private-domain: "168.192.in-addr.arpa."
+    # local-zone: "168.192.in-addr.arpa." nodefault
+
+    harden-glue: no        # trust glue only if it is within the server's authority
+    qname-minimisation: yes # send minimal information to upstream servers
+    harden-dnssec-stripped: no
+    harden-referral-path: no
+    # auto-trust-anchor-file: "/var/lib/unbound/root.key"
+    auto-trust-anchor-file: "{{ unbound.dnssec|default(true) | ternary('/var/lib/unbound/root.key', '') }}"
+    # Aggressive NSEC uses the DNSSEC NSEC chain to synthesize NXDOMAIN
+    # and other denials, using information from previous NXDOMAINs answers.
+    aggressive-nsec: no
+    unwanted-reply-threshold: 10000
+
+    prefetch: yes
+    prefetch-key: no       # prefetch DNSKEY and DS records for DNSSEC
+    # cache-min-ttl: 0
+    # cache-max-ttl: 86400
+    # cache-max-negative-ttl: 3600
+    # server-count: {{ unbound.server_count | default(ansible_facts['processor_cores']) }}
+
+    msg-cache-size: "{{ unbound.msg_cache_size | default('16m') }}"
+    rrset-cache-size: "{{ unbound.rrset_cache_size | default('128m') }}"
+    num-queries-per-thread: 4096
+    so-rcvbuf: "{{ unbound.so_rcvbuf | default('32m') }}"
+    so-sndbuf: "{{ unbound.so_sndbuf | default('4m') }}"
+
+    hide-identity: no
+    hide-version: no
+
+    # use-syslog: yes
+    verbosity: "{{ unbound.verbosity | default(1) }}"
+    log-time-ascii: yes     # log UTC timestamp in ascii, default is epoch in seconds.
+    log-time-iso: yes       # log timestamp in ISO8601 format if log-time-ascii
+
+    # log-queries: no       # print one line with time, IP, name, type, class for every query
+    # log-replies: no       # print one line per reply, with time, IP, name, type, class, rcode, timetoresolve, fromcache and responsesize
+
+remote-control:
+    control-enable: yes
+    control-interface: lo
+
+# Unnecessary, because included by default
+# include: "/etc/unbound/unbound.conf.d/zones.conf"

@@ -4,6 +4,6 @@
 zone:
     name: {{ item.name }}
     zonefile: {{ item.filename }}
-{% for q in item.allow_query_rules | default(['127.0.0.0/8 NOKEY']) %}
+{% for q in item.allow_query_rules | default(['127.0.0.0/8 NOKEY', lan.cidr + ' NOKEY']) %}
     allow-query: {{ q }}
 {% endfor %}

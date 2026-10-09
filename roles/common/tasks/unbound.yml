@@ -1,0 +1,90 @@
+# vi: ft=yaml
+---
+# See https://unbound.docs.nlnetlabs.nl/
+
+- name: Install unbound package
+  become: true
+  ansible.builtin.package:
+    name: "{{ ['dns-root-data', 'unbound', 'unbound-anchor'] }}"
+    state: latest
+  when: ansible_facts['system'] == "Linux"
+
+- name: Adjust kernel params for larger snd-buf
+  ansible.posix.sysctl:
+    name: net.core.wmem_max
+    # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/human_to_bytes_filter.html
+    value: '{{ unbound.so_sndbuf | upper | ansible.builtin.human_to_bytes }}'
+    state: present
+    reload: true
+    sysctl_set: true
+  when: (unbound.so_sndbuf | upper | ansible.builtin.human_to_bytes) > 0
+
+- name: Adjust kernel parameters to allow for larger rcv-buf
+  ansible.posix.sysctl:
+    name: net.core.rmem_max
+    value: '{{ unbound.so_rcvbuf | upper | ansible.builtin.human_to_bytes }}'
+    state: present
+    reload: true
+    sysctl_set: true
+  when: (unbound.so_rcvbuf | upper | ansible.builtin.human_to_bytes) > 0
+
+# - name: Install unbound from homebrew
+#   become: false
+#   environment:
+#     NONINTERACTIVE: "1"
+#   ansible.builtin.homebrew:
+#     name: unbound
+#     state: latest
+
+# On debian derivatives (at least, perhaps all modern systemd distros?), there is resolvconf+unbound integration.
+# Which makes unbound use the upstream nameservers provided by the local network
+# instead of doing full recursive resolving starting with the root name servers.
+- name: Disable resolvconf+unbound integration that prevents recursion starting with the root servers
+  ansible.builtin.file:
+    path: /etc/resolvconf/update.d/unbound
+    mode: '0644'
+    state: file   # modify if it exists but do NOT be create if it does not exist
+- name: Prevent systemd-resolved from interfering with Unbound-based resolution
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/resolved.conf
+    regexp: '^DNSStubListener='
+    line: DNSStubListener=no
+  ignore_errors: true
+  notify:
+    - Restart systemd-resolved
+
+- name: Remove distro-supplied DNSSEC config
+  # will enable in our own config or not
+  ansible.builtin.file:
+    path: /etc/unbound/unbound.conf.d/root-auto-trust-anchor-file.conf
+    state: absent
+  ignore_errors: true
+
+- name: 'Run unbound-control-setup to "remote" control'
+  become: true
+  ansible.builtin.command:
+    argv:
+      - unbound-control-setup
+    creates: '/etc/unbound/unbound_server.key'
+
+- name: Run unbound-anchor to prep DNSSEC validation
+  become: true
+  ansible.builtin.command:
+    argv:
+      - unbound-anchor
+
+- name: Render templated zones for unbound
+  ansible.builtin.template:
+    src: ./templates/unbound-zones.j2
+    dest: '/etc/unbound/unbound.conf.d/zones.conf'
+    mode: '0644'
+  notify:
+    - Restart unbound
+
+- name: Render templated unbound.conf
+  ansible.builtin.template:
+    src: ./templates/unbound.conf.j2
+    dest: "/etc/unbound/unbound.conf.d/{{ lan.domain }}.conf"
+    mode: '0644'
+  notify:
+    - Restart unbound

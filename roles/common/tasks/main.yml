@@ -321,5 +321,15 @@
     file: "{{ item }}.yml"
   with_items:
     - nsd
-  # when:
+  when:
+    - (ansible_facts['all_ipv4_addresses'] | intersect(lan.authoritative_dns))|length > 0
+  #   - "item in group_names"
+
+- name: Include unbound.yml
+  ansible.builtin.include_tasks:
+    file: "{{ item }}.yml"
+  with_items:
+    - unbound
+  when:
+    - (ansible_facts['all_ipv4_addresses'] | intersect(lan.resolvers))|length > 0
   #   - "item in group_names"
