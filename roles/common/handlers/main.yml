@@ -18,6 +18,7 @@
     chdir: "/home/{{ users.0.username }}/compose/"
 
 - name: Restart nsd
+  become: true
   ansible.builtin.service:
     name: nsd
     state: restarted

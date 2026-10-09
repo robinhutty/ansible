@@ -28,19 +28,19 @@
 - name: Render templated per-zone config for nsd
   ansible.builtin.template:
     src: ./templates/nsd.conf.d-zone.j2
-    dest: "/etc/nsd/nsd.conf.d/{{ item.name }}.conf"
+    dest: "/etc/nsd/nsd.conf.d/{{ item.filename }}.conf"
     mode: '0644'
-  loop: "{{ nsd_zones | default([]) }}"
+  loop: "{{ nsd.zones | default([]) }}"
   notify:
     - Restart nsd
 
 - name: Install nsd zonefiles
   ansible.builtin.copy:
-    src: "{{ item.name }}.zone"
-    dest: "/etc/nsd/{{ item.name }}.zone"
+    src: "{{ item.filename }}"
+    dest: "/etc/nsd/{{ item.filename }}"
     mode: '0644'
     backup: true
-  loop: "{{ nsd_zones | default([]) }}"
+  loop: "{{ nsd.zones | default([]) }}"
   notify:
     - Restart nsd
 

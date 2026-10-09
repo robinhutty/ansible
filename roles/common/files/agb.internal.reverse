@@ -1,0 +1,18 @@
+$ORIGIN agb.internal.
+$TTL 86400 ; default time-to-live for this zone
+; Annotated with some comments, but see https://nsd.docs.nlnetlabs.nl/en/latest/zonefile.html
+; NOTE: @ is substituted throughout with the value in $ORIGIN
+
+168.192.in-addr.arpa.   IN  SOA     ns1.agb.internal. ns2.agb.internal. (
+        2026100801  ;Serial
+        7200        ;Refresh
+        3600        ;Retry
+        1209600     ;Expire
+        3600        ;Negative response caching TTL
+)
+
+1.1.168.192.in-addr.arpa.               IN PTR router
+2.1.168.192.in-addr.arpa.               IN PTR argon
+3.1.168.192.in-addr.arpa.               IN PTR hp8
+5.1.168.192.in-addr.arpa.               IN PTR gmk
+18.1.168.192.in-addr.arpa.              IN PTR nuc

@@ -1,10 +1,10 @@
-$ORIGIN agbo.internal.
+$ORIGIN agb.internal.
 $TTL 86400 ; default time-to-live for this zone
 ; Annotated with some comments, but see https://nsd.docs.nlnetlabs.nl/en/latest/zonefile.html
 ; NOTE: @ is substituted throughout with the value in $ORIGIN
 
-@   IN  SOA     ns1.agbo.internal. ns2.agbo.internal. (
-        2026040201  ;Serial
+@   IN  SOA     ns1.agb.internal. ns2.agb.internal. (
+        2026100701  ;Serial
         7200        ;Refresh
         3600        ;Retry
         1209600     ;Expire
@@ -13,23 +13,38 @@ $TTL 86400 ; default time-to-live for this zone
 
 
 ; The nameservers that are authoritative for this zone.
-@                       NS        agbo.internal.
+@                       NS        ns1.agb.internal.
 
 ; A and AAAA records are for IPv4 and IPv6 addresses respectively
 @                       A       192.168.1.2
-ns1                     A       192.168.1.2
-ns2                     A       192.168.1.2
 argon                   A       192.168.1.2
 hp8                     A       192.168.1.3
 gmk                     A       192.168.1.5
 nuc                     A       192.168.1.18
 
+ns1                     CNAME   argon
+ns2                     CNAME   argon
+ntfy                    CNAME   argon
+smtp                    CNAME   argon
+dash                    CNAME   argon
+speaker                 CNAME   argon
 
-; CNAME record redirects from www.allgoodbits.org to allgoodbits.org
+jfin                    CNAME   gmk
+k8s                     CNAME   gmk
+vcs                     CNAME   gmk
+
+nas                     CNAME   hp8
+backup                  CNAME   hp8
+; CNAME record redirects from www.$ORIGIN to $ORIGIN
 www                     CNAME   @
 
+test                    TXT     "for testing"
+
+; NSD allows wildcards
+; *                     CNAME   @
+
 ; MX records specify Mail eXchangers
-;mail                    MX  10 allgoodbits.org.
+;mail                    MX  10 agb.internal.
 
 ; Extras:
 ; TXT records for mail (DKIM, SPF, DMARC)

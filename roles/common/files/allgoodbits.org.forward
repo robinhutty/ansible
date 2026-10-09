@@ -1,0 +1,54 @@
+$ORIGIN allgoodbits.org.
+$TTL 86400 ; default time-to-live for this zone
+; Annotated with some comments, but see https://nsd.docs.nlnetlabs.nl/en/latest/zonefile.html
+; NOTE: @ is substituted throughout with the value in $ORIGIN
+
+@   IN  SOA     ns1.allgoodbits.org. ns2.allgoodbits.org. (
+        2026040701  ;Serial
+        7200        ;Refresh
+        3600        ;Retry
+        1209600     ;Expire
+        3600        ;Negative response caching TTL
+)
+
+
+; The nameservers that are authoritative for this zone.
+@                       NS        allgoodbits.org.
+
+; A and AAAA records are for IPv4 and IPv6 addresses respectively
+@                       A       162.216.19.247
+ns1                     A       162.216.19.247
+ns2                     A       162.216.19.247
+smtp                    A       162.216.19.247
+phillips                A       100.6.78.70
+mm                      A       72.65.195.75
+home                    CNAME   mm
+
+@                       AAAA    2600:3c03::f03c:91ff:fedb:6b67
+ns1                     AAAA    2600:3c03::f03c:91ff:fedb:6b67
+ns2                     AAAA    2600:3c03::f03c:91ff:fedb:6b67
+smtp                    AAAA    2600:3c03::f03c:91ff:fedb:6b67
+
+; CNAME record redirects from www.allgoodbits.org to allgoodbits.org
+www                     CNAME   @
+; MX records specify Mail eXchangers
+;mail                    MX  10 allgoodbits.org.
+;For Fastmail
+allgoodbits.org.        MX 10 in1-smtp.messagingengine.com.
+allgoodbits.org.        MX 20 in2-smtp.messagingengine.com.
+*.allgoodbits.org.      MX 10 in1-smtp.messagingengine.com.
+*.allgoodbits.org.      MX 20 in2-smtp.messagingengine.com.
+allgoodbits.org.        TXT "v=spf1 include:spf.messagingengine.com ?all"
+*.allgoodbits.org.      TXT "v=spf1 include:spf.messagingengine.com ?all"
+fm1._domainkey          CNAME fm1.allgoodbits.org.dkim.fmhosted.com.
+fm2._domainkey          CNAME fm2.allgoodbits.org.dkim.fmhosted.com.
+fm3._domainkey          CNAME fm3.allgoodbits.org.dkim.fmhosted.com.
+
+; Extras:
+; TXT records for mail (DKIM, SPF, DMARC)
+;@                       TXT       "v=spf1 a:smtp.example.com ip4:192.0.2.1 ip6:2001:db8::3 -all"
+;_domainkey              TXT       "t=n;o=-"
+;mail._domainkey         TXT       "v=DKIM1;..."
+
+; SRV records
+; SSHFP records
