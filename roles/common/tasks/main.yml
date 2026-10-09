@@ -276,7 +276,6 @@
       - bundle
       - dump
       - --force
-      - --describe
       - --file=Brewfile
   # --force, overwrites an existing Brewfile
   # --describe, adds a description comment
