@@ -1,37 +1,57 @@
 # vi: ft=yaml
-# Prepare containerd and services run by `nerdctl compose`
+# Prepare containerd including nerdctl so we can run OCI containers
+# Uses OS package manager for containerd, etc.
+# Uses homebrew to provide nerdctl
+# If using rootless mode (https://github.com/containerd/nerdctl#rootless-mode), also use homebrew packages
 
 - name: Installing packages
   become: true
   ansible.builtin.package:
     name: "{{ item }}"
     state: latest
-  loop: "{{ common_containerd.packages }}"
+  loop: "{{ common_containerd.rootless.enabled | ternary(common_containerd.rootless.packages,common_containerd.packages) }}"
 
-- name: Setting (github) download arch
-  ansible.builtin.set_fact:
-    common_nerdctl_arch: "{{ (ansible_facts['architecture'] == 'x86_64') | ternary('amd64', 'arm64') }}"
+- name: Install nerdctl Homebrew formula
+  become: false
+  environment:
+    NONINTERACTIVE: 1
+  ansible.builtin.homebrew:
+    name: nerdctl
+    state: latest
 
-- name: Setting (github) download filename
-  ansible.builtin.set_fact:
-    common_nerdctl_filename: "{{ ['nerdctl-full', common_containerd.nerdctl.version, ansible_facts['system'] | lower, common_nerdctl_arch] | join('-') + '.tar.gz' }}"
+# - name: Install Homebrew formula for rootless
+#   become: false
+#   environment:
+#     NONINTERACTIVE: 1
+#   ansible.builtin.homebrew:
+#     name: "{{ ['rootlesskit', 'slirp4netns'] }}"
+#     state: latest
+#   when: common_containerd.rootless.enabled
 
-- name: Setting (github) download URL
-  ansible.builtin.set_fact:
-    common_nerdctl_download_url: "{{ ['https://github.com/containerd/nerdctl/releases/download', 'v' + common_containerd.nerdctl.version, common_nerdctl_filename] | join('/') }}"
+# - name: Setting (github) download arch
+#   ansible.builtin.set_fact:
+#     common_nerdctl_arch: "{{ (ansible_facts['architecture'] == 'x86_64') | ternary('amd64', 'arm64') }}"
 
-- name: Downloading nerdctl
-  ansible.builtin.get_url:
-    checksum: "sha256:https://github.com/containerd/nerdctl/releases/download/v{{ common_containerd.nerdctl.version }}/SHA256SUMS"
-    url: "{{ common_nerdctl_download_url }}"
-    dest: "/tmp/{{ common_nerdctl_filename }}"
+# - name: Setting (github) download filename
+#   ansible.builtin.set_fact:
+#     common_nerdctl_filename: "{{ ['nerdctl-full', common_containerd.nerdctl.version, ansible_facts['system'] | lower, common_nerdctl_arch] | join('-') + '.tar.gz' }}"
 
-- name: Install nerdctl to /usr/local/
-  ansible.builtin.unarchive:
-    remote_src: true
-    src: "/tmp/{{ common_nerdctl_filename }}"
-    dest: /usr/local/
-    creates: /usr/local/bin/nerdctl
+# - name: Setting (github) download URL
+#   ansible.builtin.set_fact:
+#     common_nerdctl_download_url: "{{ ['https://github.com/containerd/nerdctl/releases/download', 'v' + common_containerd.nerdctl.version, common_nerdctl_filename] | join('/') }}"
+
+# - name: Downloading nerdctl
+#   ansible.builtin.get_url:
+#     checksum: "sha256:https://github.com/containerd/nerdctl/releases/download/v{{ common_containerd.nerdctl.version }}/SHA256SUMS"
+#     url: "{{ common_nerdctl_download_url }}"
+#     dest: "/tmp/{{ common_nerdctl_filename }}"
+
+# - name: Install nerdctl to /usr/local/
+#   ansible.builtin.unarchive:
+#     remote_src: true
+#     src: "/tmp/{{ common_nerdctl_filename }}"
+#     dest: /usr/local/
+#     creates: /usr/local/bin/nerdctl
 
 - name: Install rootless
   become: false
@@ -40,14 +60,16 @@
     argv:
       - containerd-rootless-setuptool.sh
       - install
+  when: common_containerd.rootless.enabled
 
-- name: Install containerd-rootless bypass4netsd
+- name: Install containerd-rootless bypass4netnsd
   become: false
   ansible.builtin.command:
     creates: /usr/local/bin/bypass4netnsd
     argv:
       - /usr/local/bin/containerd-rootless-setuptool.sh
       - install-bypass4netnsd
+  when: common_containerd.rootless.enabled
 
 - name: Install containerd-rootless Services
   become: false
@@ -58,6 +80,7 @@
       - "install-{{ item }}"
   loop:
     - buildkit
+  when: common_containerd.rootless.enabled
 
 - name: Start/enable service containerd
   ansible.builtin.service:
@@ -74,6 +97,7 @@
     owner: "{{ users.0.username }}"
     group: "{{ users.0.username }}"
   loop: "{{ common_caddy.vhosts }}"
+  when: common_containerd.compose
 
 - name: Setup for Compose/Caddy
   ansible.builtin.file:
@@ -83,6 +107,16 @@
     group: "{{ users.0.username }}"
   loop:
     - "/home/{{ users.0.username }}/compose/caddy/composed"
+  when: common_containerd.compose
+
+- name: Setup dirs for Compose
+  ansible.builtin.file:
+    path: "/home/{{ users.0.username }}/compose/composed/{{ item.name }}"
+    state: directory
+    owner: "{{ users.0.username }}"
+    group: "{{ users.0.username }}"
+  loop: "{{ common_composed_services }}"
+  when: common_containerd.compose
 
 - name: Template primary Compose file
   ansible.builtin.template:
@@ -91,7 +125,9 @@
     mode: '0644'
     owner: "{{ users.0.username }}"
     group: "{{ users.0.username }}"
+  when: common_containerd.compose
 
+# TODO: consider logging, log expiry, and ensuring that this does not fill the disk
 - name: Template sub Compose files
   ansible.builtin.template:
     src: "{{ item.name }}-compose.yaml.j2"
@@ -101,6 +137,7 @@
     group: "{{ users.0.username }}"
   loop: "{{ common_composed_services }}"
   notify: "Restart composed service {{ item.name }}"
+  when: common_containerd.compose
 
 - name: Template .env for Compose
   ansible.builtin.template:
@@ -116,6 +153,7 @@
       COMPOSE_PROJECT_NAME: "{{ inventory_hostname }}"
       CADDY_TAG: "latest"
       DEFAULT_TAG: "latest"
+  when: common_containerd.compose
 
 - name: Template .env for sub Compose
   ansible.builtin.template:
@@ -126,6 +164,7 @@
     group: "{{ users.0.username }}"
   loop: "{{ common_composed_services }}"
   notify: "Restart composed service {{ item.name }}"
+  when: common_containerd.compose
 
 - name: Template Caddyfile
   ansible.builtin.template:
@@ -135,6 +174,7 @@
     owner: "{{ users.0.username }}"
     group: "{{ users.0.username }}"
   notify: "Restart composed Caddy"
+  when: common_containerd.compose
 
 - name: Template Caddyfile for vhosts
   ansible.builtin.template:
@@ -144,3 +184,4 @@
     owner: "{{ users.0.username }}"
     group: "{{ users.0.username }}"
   loop: "{{ common_caddy.vhosts }}"
+  when: common_containerd.compose

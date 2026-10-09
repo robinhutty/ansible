@@ -13,9 +13,12 @@ common_timezone: America/New_York
 
 common_containerd:
   nerdctl:
-    url: https://github.com/containerd/nerdctl/releases/download/v${NERDCTL_VERSION}/nerdctl-full-${NERDCTL_VERSION}-linux-arm64.tar.gz
-    version: 2.2.2
-  packages: [containerd, uidmap, gnupg2]
+    version: 2.4.1
+  compose: false  # whether to configure "compose" and composed services
+  packages: [containerd, containernetworking-plugins, gnupg2]
+  rootless:
+    enabled: false # whether to use rootless mode: https://github.com/containerd/nerdctl#rootless-mode
+    packages: [containerd, containernetworking-plugins, uidmap, gnupg2, bypass4netns, slirp4netns]
 
 # common_composed_services:
   # - name: homepage
@@ -47,6 +50,8 @@ common_packages:
     - vim
     - wget
     - zstd
+    # for ghostty support
+    - terminfo
 
   Debian_12:
     - debian-goodies
@@ -109,9 +114,9 @@ common_brew_taps:
 common_brew_formulae:
   common:
     # experimental
+    - atuin
     - atuin-server    # atuin-server: Sync server for atuin - Improved shell history
     - garden          # Grow and cultivate collections of Git trees
-    - kubectl-tree    # plugin to browse Kubernetes object hierarchies
     - sem-cli         # Semantic version control CLI with entity-level diffs and blame
     - weave           # Entity-level semantic merge driver for Git
 
@@ -126,6 +131,7 @@ common_brew_formulae:
     - dua-cli
     - duf
     - parallel-disk-usage
+    - leaves
     - eza
     - forgejo-cli
     - gcli
@@ -168,14 +174,15 @@ common_brew_formulae:
     - lima-additional-guestagents
     - socket_vmnet
     - mac-cleanup-py # https://github.com/mac-cleanup/mac-cleanup-py
-    - mist-cli # https://github.com/ninxsoft/mist-cli
+    - mist-cli # fetch macos installers: https://github.com/ninxsoft/mist-cli
     - zsh
     - zsh-completions
     - zsh-syntax-highlighting
     # Casks
-    - iina
+    # - iina
     - koodo-reader
-    - ollama-app
+    # - ollama-app
+    - rapid-mlx
     - qobuz
     - reaper
     - skim
@@ -199,10 +206,15 @@ common_brew_formulae:
     - nb
 
     # - huggingface-cli # obsoleted (for me) by ollama and/or 'models'?
-    - models       # for browsing AI models, etc.
-    - ollama
-    - opencode     # or use anomalyco/tap/opencode?
-    - skills       # Open agent skills ecosystem
+    # - models       # for browsing AI models, etc.
+    # - ollama
+    # - opencode     # or use anomalyco/tap/opencode?
+    # - skills       # Open agent skills ecosystem
+
+    - kubernetes-cli
+    - kubetui
+    - kubie           # powerful alternative to kubectx and kubens: https://github.com/kubie-org/kubie
+    - kubectl-tree    # plugin to browse Kubernetes object hierarchies
 
     - pvetui # Proxmox VE TUI
     - shellcheck

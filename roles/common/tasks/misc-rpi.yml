@@ -84,6 +84,29 @@
   register: common_vacuum_size
   changed_when: "'Deleted' in common_vacuum_size.stdout"
 
+# TODO: Simplify and reduce unneeded services to reduce SD card activity:
+
+# TODO: Stop and disable bluetooth.service
+# TODO: Stop and disable wpa_supplicant.service
+
+# TODO: I will upgrade when I choose?
+# systemctl mask apt-daily-upgrade
+# systemctl mask apt-daily
+# systemctl mask man-db
+# systemctl disable apt-daily-upgrade.timer
+# systemctl disable apt-daily.timer
+# systemctl disable man-db.timer
+# systemctl stop apt-daily-upgrade.timer
+# systemctl stop apt-daily.timer
+# systemctl stop man-db.timer
+# rm /var/lib/man-db/auto-update
+
+# # /etc/fstab
+# tmpfs  /var/tmp  tmpfs  defaults,noatime,nosuid,nodev   0  0
+# tmpfs  /var/spool  tmpfs  defaults,noatime,nosuid,nodev   0  0
+# tmpfs  /var/cache  tmpfs  defaults,noatime,nosuid,nodev   0  0
+
+
 # TODO: remote logging
 # TODO: ntfy
 # TODO: system mail notifications go via postfix -> fastmail
